@@ -6,18 +6,27 @@ import pandas as pd
 from numpy import random as rn
 import pickle
 
-with open('PairsPrice.pkl', 'rb') as f:
-    PairsPrice = pickle.load(f)
+with open('PriceData_Trading.pkl', 'rb') as f:
+    price_trading = pickle.load(f)
+with open('PriceData_Train.pkl', 'rb') as f:
+    price_training = pickle.load(f)
+with open('PriceData_Full.pkl', 'rb') as f:
+    price_full = pickle.load(f)
+with open('PriceData_TrainExcl2020.pkl', 'rb') as f:
+    price_trainexcl = pickle.load(f)
+
+
+
     
 # Parameters
-T = len(PairsPrice)
+T = len(price_trading)
 # fee = 0.001 (might be a parameter)
 window = 252 # window size for rolling regression
 t_threshold = -2.5 # t-statistic threshold, to be changed
-stock1 = PairsPrice[:, 0]
-stock2 = PairsPrice[:, 1]
-returns_rate = np.append(np.zeros((1, 2)), (PairsPrice[1:, :] 
-    - PairsPrice[:-1, :]) / PairsPrice[:-1, :], axis = 0)
+stock1 = price_trading[:, 0]
+stock2 = price_trading[:, 1]
+returns_rate = np.append(np.zeros((1, 2)), (price_trading[1:, :] 
+    - price_trading[:-1, :]) / price_trading[:-1, :], axis = 0)
 
 # Start trading
 pairs_returns = np.array([])
