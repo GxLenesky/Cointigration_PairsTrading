@@ -9,7 +9,6 @@ import pickle
 def z_score(series):
     return (series - series.mean()) / np.std(series)
 
-
 with open('PriceData_Trading.pkl', 'rb') as f:
     price_trading = pickle.load(f)
 with open('PriceData_Train.pkl', 'rb') as f:
@@ -20,8 +19,8 @@ with open('PriceData_TrainExcl2020.pkl', 'rb') as f:
     price_trainexcl = pickle.load(f)
     
 
-P1 = price_trading["MSFT"]
-P2 = price_trading["AAPL"]
+P1 = price_trading["PG"]
+P2 = price_trading["ULVR"]
 
 #Observe the range of the z-score
 #Warning: can't determine the range of z-score by looking at the plot because of the future function
@@ -44,9 +43,9 @@ plt.show()"""
 #Parameters
 ins_window = 5
 long_window = 60
-fee = 0
+fee = 0.0002
 trading_volume = 0.3
-deviation = 1
+deviation = 1.5
 closing = 0.5
 stoploss = 2
 
@@ -56,8 +55,8 @@ long_mean = ratio.rolling(long_window).mean()
 long_std = ratio.rolling(long_window).std()
 z_rolling = (ins_ratio - long_mean) / long_std
 #Validate from 2021-03-30
-#print(ins_ratio[:15])
-#print(np.array(z_rolling[100:200]))
+#print(ins_ratio[58:60])
+#print(z_rolling[58:61])
 
 
 def Trade(price1, price2, volume, fee, capital, holding1, holding2):
@@ -69,7 +68,6 @@ def Trade(price1, price2, volume, fee, capital, holding1, holding2):
     return capital, holding1, holding2
 
 def Close(price1, price2, fee, capital, holding1, holding2):
-    capital = capital + holding1 * price1 + holding2 * price2
     trading_capital = abs(holding1) * price1 + abs(holding2) * price2
     capital -= trading_capital * fee
     holding1 = 0
@@ -81,9 +79,12 @@ holding1 = 0
 holding2 = 0
 capital = 1
 capital_list = [1]
+holding1_list = [0]
+holding2_list = [0]
 
 for i in range(59, len(z_rolling)):
     #print(i)
+    capital = capital + holding1 * (P1[i] - P1[i - 1]) + holding2 * (P2[i] - P2[i - 1])
     if z_rolling[i] > deviation:
         #Short P1, Long P2
         if holding1 == 0 and holding2 == 0:
@@ -111,9 +112,13 @@ for i in range(59, len(z_rolling)):
         capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
 
     capital_list.append(capital)
+    holding1_list.append(holding1)
+    holding2_list.append(holding2)
     
     
 plt.plot(capital_list)
+#plt.plot(holding1_list)
+#plt.plot(holding2_list)
 plt.show()
 
 
