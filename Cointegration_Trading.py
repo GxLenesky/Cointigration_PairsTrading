@@ -19,8 +19,8 @@ with open('PriceData_TrainExcl2020.pkl', 'rb') as f:
     price_trainexcl = pickle.load(f)
     
 
-P1 = price_trading["PG"]
-P2 = price_trading["ULVR"]
+P1 = price_trading["C"]
+P2 = price_trading["WFC"]
 
 #Observe the range of the z-score
 #Warning: can't determine the range of z-score by looking at the plot because of the future function
@@ -44,7 +44,7 @@ plt.show()"""
 ins_window = 5
 long_window = 60
 fee = 0.0002
-trading_volume = 0.3
+trading_volume = 0.5
 deviation = 1.5
 closing = 0.5
 stoploss = 2
@@ -54,14 +54,14 @@ ins_ratio = ratio.rolling(ins_window).mean()
 long_mean = ratio.rolling(long_window).mean()
 long_std = ratio.rolling(long_window).std()
 z_rolling = (ins_ratio - long_mean) / long_std
-#Validate from 2021-03-30
+#Validate from 2010-03-30
 #print(ins_ratio[58:60])
 #print(z_rolling[58:61])
 
 
 def Trade(price1, price2, volume, fee, capital, holding1, holding2):
     #Short 1, Long 2
-    trading_capital = capital * volume
+    trading_capital = volume
     capital -= 2 * trading_capital * fee
     holding1 -= trading_capital / price1
     holding2 += trading_capital / price2
@@ -77,16 +77,19 @@ def Close(price1, price2, fee, capital, holding1, holding2):
 #Start trading
 holding1 = 0
 holding2 = 0
+action = 0
 capital = 1
 capital_list = [1]
 holding1_list = [0]
 holding2_list = [0]
+action_list = [0] #0: no action, 1: short P1, long P2, -1: long P1, short P2, 0: take profit, 2: stop loss
 
-for i in range(59, len(z_rolling)):
+for i in range(long_window - 1, len(P1)):
     #print(i)
     capital = capital + holding1 * (P1[i] - P1[i - 1]) + holding2 * (P2[i] - P2[i - 1])
-    if z_rolling[i] > deviation:
+    if z_rolling[i] > deviation and z_rolling[i] < stoploss:
         #Short P1, Long P2
+        action = 1
         if holding1 == 0 and holding2 == 0:
             capital, holding1, holding2 = Trade(P1[i], P2[i], trading_volume, fee, capital, holding1, holding2)
             
@@ -94,8 +97,9 @@ for i in range(59, len(z_rolling)):
             capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
             capital, holding1, holding2 = Trade(P1[i], P2[i], trading_volume, fee, capital, holding1, holding2)
             
-    if z_rolling[i] < -deviation:
+    elif z_rolling[i] < -deviation and z_rolling[i] > -stoploss:
         #Long P1, Short P2
+        action = -1
         if holding1 == 0 and holding2 == 0:
             capital, holding2, holding1 = Trade(P2[i], P1[i], trading_volume, fee, capital, holding2, holding1)
             
@@ -103,20 +107,37 @@ for i in range(59, len(z_rolling)):
             capital, holding2, holding1 = Close(P2[i], P1[i], fee, capital, holding2, holding1)
             capital, holding2, holding1 = Trade(P2[i], P1[i], trading_volume, fee, capital, holding2, holding1)
 
-    if abs(z_rolling[i]) < closing:
-        #Close position    
+    elif abs(z_rolling[i]) < closing:
+        #Close position 
+        action = 0  
         capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
     
-    if abs(z_rolling[i]) > stoploss:
+    elif abs(z_rolling[i]) > stoploss:
         #Stop loss
+        action = 2
         capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
-
+    
     capital_list.append(capital)
     holding1_list.append(holding1)
     holding2_list.append(holding2)
+    action_list.append(action)
     
-    
+
+"""print(capital_list[45:55])
+print(holding1_list[45:55])
+print(holding2_list[45:55])
+print(action_list[45:55])"""
+
 plt.plot(capital_list)
+for i in range(len(action_list)):
+    if action_list[i] == 1:
+        plt.plot(i, capital_list[i], 'ro')  
+    if action_list[i] == -1:
+        plt.plot(i, capital_list[i], 'go') 
+    if action_list[i] == 0:
+        plt.plot(i, capital_list[i], 'bo')
+    if action_list[i] == 2:
+        plt.plot(i, capital_list[i], 'yo')
 #plt.plot(holding1_list)
 #plt.plot(holding2_list)
 plt.show()
