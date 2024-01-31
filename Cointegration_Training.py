@@ -44,9 +44,9 @@ plt.show()"""
 ins_window = 5
 long_window = 60
 fee = 0.0002
-trading_volume = 0.5
+trading_volume = 0.3
 deviation = 1.5
-closing = 0.5
+closing = 1
 stoploss = 2
 
 #Calculate z-score using rolling window
@@ -77,19 +77,18 @@ def Close(price1, price2, fee, capital, holding1, holding2):
 #Start trading
 holding1 = 0
 holding2 = 0
-action = 0
 capital = 1
-capital_list = [1]
-holding1_list = [0]
-holding2_list = [0]
-action_list = [0] #0: no action, 1: short P1, long P2, -1: long P1, short P2, 0: take profit, 2: stop loss
+capital_list = []
+holding1_list = []
+holding2_list = []
+action_list = [] #0: no action, 1: short P1, long P2, -1: long P1, short P2, 0: take profit, 2: stop loss, -2: no action
 
-for i in range(long_window - 1, len(P1)):
+for i in range(long_window - 1, len(z_rolling)):
     #print(i)
     capital = capital + holding1 * (P1[i] - P1[i - 1]) + holding2 * (P2[i] - P2[i - 1])
-    if z_rolling[i] > deviation and z_rolling[i] < stoploss:
+    if z_rolling[i] > deviation and z_rolling[i] <= stoploss:
         #Short P1, Long P2
-        action = 1
+        action_list.append(1)
         if holding1 == 0 and holding2 == 0:
             capital, holding1, holding2 = Trade(P1[i], P2[i], trading_volume, fee, capital, holding1, holding2)
             
@@ -97,39 +96,36 @@ for i in range(long_window - 1, len(P1)):
             capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
             capital, holding1, holding2 = Trade(P1[i], P2[i], trading_volume, fee, capital, holding1, holding2)
             
-    elif z_rolling[i] < -deviation and z_rolling[i] > -stoploss:
+    elif z_rolling[i] < -deviation and z_rolling[i] >= -stoploss:
         #Long P1, Short P2
-        action = -1
+        action_list.append(-1)
         if holding1 == 0 and holding2 == 0:
             capital, holding2, holding1 = Trade(P2[i], P1[i], trading_volume, fee, capital, holding2, holding1)
             
-        if holding1 < 0 and holding2 > 0:
+        elif holding1 < 0 and holding2 > 0:
             capital, holding2, holding1 = Close(P2[i], P1[i], fee, capital, holding2, holding1)
             capital, holding2, holding1 = Trade(P2[i], P1[i], trading_volume, fee, capital, holding2, holding1)
 
-    elif abs(z_rolling[i]) < closing:
+    elif abs(z_rolling[i]) <= closing:
         #Close position 
-        action = 0  
+        action_list.append(0)   
         capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
     
     elif abs(z_rolling[i]) > stoploss:
         #Stop loss
-        action = 2
+        action_list.append(2)
         capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
+    else:
+        #No action
+        action_list.append(-2)
     
     capital_list.append(capital)
     holding1_list.append(holding1)
     holding2_list.append(holding2)
-    action_list.append(action)
     
-
-"""print(capital_list[45:55])
-print(holding1_list[45:55])
-print(holding2_list[45:55])
-print(action_list[45:55])"""
-
-plt.plot(capital_list)
-for i in range(len(action_list)):
+    
+plt.plot(capital_list[0:1000])
+for i in range(len(action_list[0:1000])):
     if action_list[i] == 1:
         plt.plot(i, capital_list[i], 'ro')  
     if action_list[i] == -1:
@@ -138,8 +134,28 @@ for i in range(len(action_list)):
         plt.plot(i, capital_list[i], 'bo')
     if action_list[i] == 2:
         plt.plot(i, capital_list[i], 'yo')
+    if action_list[i] == -2:
+        plt.plot(i, capital_list[i], 'ko')
 #plt.plot(holding1_list)
 #plt.plot(holding2_list)
-plt.show()
+#plt.show()
+
+cover_front = [0] * 59
+complete_action = cover_front + action_list
+complete_holding1 = cover_front + holding1_list
+complete_holding2 = cover_front + holding2_list
+complete_capital = cover_front + capital_list
+
+"""print(len(complete_action), len(complete_holding1), 
+    len(complete_holding2), len(complete_capital), len(price_training["Date"]),
+    len(P1), len(P2), len(ratio), len(ins_ratio), len(long_mean), len(long_std), len(z_rolling))"""
+
+Input_and_Action = pd.DataFrame({"date": price_training["Date"],
+    "C": P1, "WFC": P2, "ratio": ratio, "ins_ratio": ins_ratio,
+    "long_mean": long_mean, "long_std": long_std, "z_score": z_rolling, 
+    "action": complete_action, "capital": complete_capital,
+    "holding1": complete_holding1, "holding2": complete_holding2})
+
+Input_and_Action.to_csv("C_WFC_training.csv", index = False)
 
 
