@@ -19,8 +19,8 @@ with open('PriceData_TrainExcl2020.pkl', 'rb') as f:
     price_trainexcl = pickle.load(f)
     
 
-P1 = price_trading["WMT"]
-P2 = price_trading["TGT"]
+P1 = price_trading["MSFT"]
+P2 = price_trading["AAPL"]
 
 #Observe the range of the z-score
 #Warning: can't determine the range of z-score by looking at the plot because of the future function
@@ -151,11 +151,11 @@ complete_capital = cover_front + capital_list
     len(P1), len(P2), len(ratio), len(ins_ratio), len(long_mean), len(long_std), len(z_rolling))"""
 
 Input_and_Action = pd.DataFrame({"date": price_trading["Date"],
-    "WMT": P1, "TGT": P2, "ratio": ratio, "ins_ratio": ins_ratio,
+    "MSFT": P1, "AAPL": P2, "ratio": ratio, "ins_ratio": ins_ratio,
     "long_mean": long_mean, "long_std": long_std, "z_score": z_rolling, 
     "action": complete_action, "capital": complete_capital,
     "holding1": complete_holding1, "holding2": complete_holding2})
 
-Input_and_Action.to_csv("WMT_TGT_trading.csv", index = False)
+#Input_and_Action.to_csv("MSFT_AAPL_trading.csv", index = False)
 
 

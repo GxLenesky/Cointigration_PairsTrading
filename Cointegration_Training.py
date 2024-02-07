@@ -138,7 +138,7 @@ for i in range(len(action_list[0:1000])):
         plt.plot(i, capital_list[i], 'ko')
 #plt.plot(holding1_list)
 #plt.plot(holding2_list)
-#plt.show()
+plt.show()
 
 cover_front = [0] * 59
 complete_action = cover_front + action_list
@@ -156,6 +156,6 @@ Input_and_Action = pd.DataFrame({"date": price_training["Date"],
     "action": complete_action, "capital": complete_capital,
     "holding1": complete_holding1, "holding2": complete_holding2})
 
-Input_and_Action.to_csv("C_WFC_training.csv", index = False)
+#Input_and_Action.to_csv("C_WFC_training.csv", index = False)
 
 
