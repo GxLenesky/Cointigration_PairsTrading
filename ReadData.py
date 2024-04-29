@@ -16,5 +16,5 @@ with open('PriceData_Full.pkl', 'wb') as f:
 with open('PriceData_TrainExcl2020.pkl', 'wb') as f:
     pickle.dump(price_trainexcl, f)"""
 
-#print(np.array(price_trading["TGT"][:10]))
+#print(np.array(price_trading["TGT"]))
 
