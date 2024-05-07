@@ -92,13 +92,15 @@ for name in range(4):
             if holding1 == 0 and holding2 == 0:
                 capital, holding1, holding2 = Trade(P1[i], P2[i], trading_volume, fee, capital, holding1, holding2)
                 
-            if holding1 > 0 and holding2 < 0:
+                open_capital.append(capital)
+                
+            elif holding1 > 0 and holding2 < 0:
                 capital, holding1, holding2 = Close(P1[i], P2[i], fee, capital, holding1, holding2)
                 reward_percentage_dic[i] = capital - open_capital[-1]
                 
                 capital, holding1, holding2 = Trade(P1[i], P2[i], trading_volume, fee, capital, holding1, holding2)
-            
-            open_capital.append(capital)
+                
+                open_capital.append(capital)
                 
         elif z_rolling[i] < -deviation and z_rolling[i] >= -stoploss:
             #Long P1, Short P2
@@ -106,13 +108,15 @@ for name in range(4):
             if holding1 == 0 and holding2 == 0:
                 capital, holding2, holding1 = Trade(P2[i], P1[i], trading_volume, fee, capital, holding2, holding1)
                 
+                open_capital.append(capital)
+                
             elif holding1 < 0 and holding2 > 0:
                 capital, holding2, holding1 = Close(P2[i], P1[i], fee, capital, holding2, holding1)
                 reward_percentage_dic[i] = capital - open_capital[-1]
                 
                 capital, holding2, holding1 = Trade(P2[i], P1[i], trading_volume, fee, capital, holding2, holding1)
-
-            open_capital.append(capital)
+                
+                open_capital.append(capital)
             
         elif abs(z_rolling[i]) <= closing or i == daterange[period][1]:
             #Close position 
